@@ -30,6 +30,7 @@ MESES_BCV = {
 def home (request):
     return render(request, 'home/index.html')
 
+
 def tasa(request, moneda, cambio):
     moneda = moneda.lower()
     cambio = cambio.lower()
@@ -45,23 +46,46 @@ def tasa(request, moneda, cambio):
         }
     }
 
-    url = diccionario_api.get(moneda).get(cambio)
+    sub_dict = diccionario_api.get(moneda)
+    if not sub_dict:
+        return JsonResponse({'error': 'Moneda no válida'}, status=400)
 
-    respuesta = requests.get(url)
-    info_api = respuesta.json()
+    url = sub_dict.get(cambio)
+    if not url:
+        return JsonResponse({'error': 'Tipo de cambio no válido'}, status=400)
 
-    fecha = datetime.fromisoformat(info_api['fechaActualizacion'].replace('Z', '+00:00'))
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        respuesta = requests.get(url, headers=headers, timeout=10)
 
-    info_tasa = JsonResponse({
-                'fuente': info_api['fuente'].capitalize(),
-                'nombre': info_api['nombre'],
-                'compra': info_api['compra'],
-                'venta': info_api['venta'],
-                'promedio': info_api['promedio'],
-                'fecha_actualizacion': fecha.strftime('%d/%m/%Y'),
-            })
+        if respuesta.status_code != 200:
+            return JsonResponse({'error': 'Error al consultar servicio externo'}, status=502)
 
-    return info_tasa
+        info_api = respuesta.json()
+
+        # Parsear la fecha de forma segura
+        fecha_str = info_api.get('fechaActualizacion', '')
+        try:
+            fecha_clean = fecha_str.replace('Z', '+00:00')
+            fecha_obj = datetime.fromisoformat(fecha_clean)
+            fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
+        except Exception:
+            fecha_formateada = datetime.now().strftime('%d/%m/%Y')
+
+        return JsonResponse({
+            'fuente': info_api.get('fuente', '').capitalize(),
+            'nombre': info_api.get('nombre', ''),
+            'compra': info_api.get('compra', 0),
+            'venta': info_api.get('venta', 0),
+            'promedio': info_api.get('promedio', 0),
+            'fecha_actualizacion': fecha_formateada,
+        })
+
+    except Exception as e:
+        print(f"Error en vista tasa ({moneda}/{cambio}): {e}")
+        return JsonResponse({'error': 'Error interno del servidor al procesar la tasa'}, status=500)
 
 def promedio_usdt(request):
     headers = {
