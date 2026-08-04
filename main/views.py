@@ -108,7 +108,7 @@ def promedio_usdt(request):
     preciosVenta = []
 
     try:
-        payload = {
+        payload_buy = {
             "asset": "USDT",
             "fiat": "VES",
             "tradeType": "BUY",
@@ -117,12 +117,14 @@ def promedio_usdt(request):
             "merchantCheck": False,
             "publisherType": None
         }
-        res = requests.post(url, json=payload, headers=headers)
-        if res.status_code == 200:
-            for item in res.json().get("data", []):
-                preciosCompra.append(float(item["adv"]["price"]))
+        res_buy = requests.post(url, json=payload_buy, headers=headers, timeout=8)
+        if res_buy.status_code == 200:
+            data_buy = res_buy.json()
+            for item in data_buy.get("data", []):
+                if "adv" in item and "price" in item["adv"]:
+                    preciosCompra.append(float(item["adv"]["price"]))
 
-        payload = {
+        payload_sell = {
             "asset": "USDT",
             "fiat": "VES",
             "tradeType": "SELL",
@@ -131,32 +133,38 @@ def promedio_usdt(request):
             "merchantCheck": False,
             "publisherType": None
         }
-        res = requests.post(url, json=payload, headers=headers)
-        print("STATUS:", res.status_code)
-        print("RESPONSE:", res.json())
-        if res.status_code == 200:
-            for item in res.json().get("data", []):
-                preciosVenta.append(float(item["adv"]["price"]))
+        res_sell = requests.post(url, json=payload_sell, headers=headers, timeout=8)
+        if res_sell.status_code == 200:
+            data_sell = res_sell.json()
+            for item in data_sell.get("data", []):
+                if "adv" in item and "price" in item["adv"]:
+                    preciosVenta.append(float(item["adv"]["price"]))
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
+        print(f"Error consultando Binance P2P: {e}")
         return JsonResponse({
-            'error': 'Error de conexión con Binance',
-            'detalle_exception': str(e)
+            'error': 'Error al conectar con Binance P2P',
+            'promedio_tasa_compra': 0,
+            'promedio_tasa_venta': 0
         }, status=502)
 
-    if(not preciosCompra or not preciosVenta):
-        return JsonResponse({'error': 'No se pudo obtener información P2P'})
+    if not preciosCompra or not preciosVenta:
+        return JsonResponse({
+            'error': 'No se obtuvieron datos P2P de Binance',
+            'promedio_tasa_compra': 0,
+            'promedio_tasa_venta': 0
+        }, status=200)
 
-    infop2p = JsonResponse({
+    infop2p = {
         "asset": "USDT",
         "fiat": "VES",
         "promedio_tasa_compra": round(sum(preciosCompra) / len(preciosCompra), 2),
         "promedio_tasa_venta": round(sum(preciosVenta) / len(preciosVenta), 2),
-    })
+    }
 
     cache.set(cache_key, infop2p, 300)
 
-    return infop2p
+    return JsonResponse(infop2p)
 
 def parsear_fecha_bcv(fecha_raw, fecha_str_texto):
     if fecha_raw:
