@@ -1,16 +1,18 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tasa Dolar</title>
     <link rel="stylesheet" href="{% static 'home/css/style.css' %}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="h-full flex items-center justify-center p-4 bg-[#1E293B]">
+<body class="min-h-screen flex items-center justify-center p-4 bg-[#1E293B]">
 
     <div class="w-full max-w-5xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 md:p-8">
+
         <div class="text-center mb-8">
             <span class="inline-block p-3 bg-emerald-500/10 text-emerald-400 rounded-xl mb-3">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,68 +22,68 @@
             <h1 class="text-2xl font-bold text-white tracking-tight">Tasas de Cambio</h1>
             <p class="text-sm text-slate-400 mt-1">Selecciona una tasa para consultar y calcular</p>
         </div>
+
         <div class="flex flex-wrap justify-center gap-3 mb-8">
-
-            <button onclick="consultarTasa('dolar', 'oficial', this)"
-                    class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
-                <span class="text-[10px] font-semibold text-slate-400 group-hover:text-emerald-400">DÓLAR</span>
+            <button id="btn-dolar-oficial" onclick="consultarTasa('dolar', 'oficial', this)" class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
+                <span class="text-[10px] font-semibold text-emerald-400 group-hover:text-emerald-400">Dólar BCV</span>
                 <span class="text-xs font-bold text-slate-200 group-hover:text-white">Oficial</span>
+                <span id="tasa-btn-dolar-oficial" class="text-[11px] font-extrabold text-emerald-400 font-mono">Bs. --,--</span>
             </button>
 
-            <button onclick="consultarTasa('euro', 'oficial', this)"
-                    class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-blue-600/20 hover:border-blue-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
-                <span class="text-[10px] font-semibold text-slate-400 group-hover:text-blue-400">EURO</span>
-                <span class="text-xs font-bold text-slate-200 group-hover:text-white">Oficial</span>
+            <button id="btn-bcv-futuro" onclick="consultarTasa('dolar', 'futuro', this)" class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-lime-600/20 hover:border-lime-500/50 border border-slate-600 rounded-xl transition-all duration-200 group relative">
+                <span class="text-[10px] font-semibold text-lime-400 group-hover:text-lime-300">Dólar BCV</span>
+                <span class="text-xs font-bold text-slate-200 group-hover:text-white">Próxima Tasa</span>
+                <span id="tasa-btn-bcv-futuro" class="text-[11px] font-extrabold text-lime-400 font-mono">Bs. --,--</span>
             </button>
 
-            <button onclick="consultarP2P('compra', this)"
-                    class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-amber-600/20 hover:border-amber-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
-                <span class="text-[10px] font-semibold text-slate-400 group-hover:text-amber-400">USDT</span>
+            <button onclick="consultarTasa('euro', 'oficial', this)" class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-blue-600/20 hover:border-blue-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
+                <span class="text-[10px] font-semibold text-blue-400 group-hover:text-blue-400">Euro BCV</span>
+                <span class="text-xs font-bold text-slate-200 group-hover:text-white">Oficial</span>
+                <span id="tasa-btn-euro-oficial" class="text-[11px] font-extrabold text-blue-400 font-mono">Bs. --,--</span>
+            </button>
+
+            <button onclick="consultarP2P('compra', this)" class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-amber-600/20 hover:border-amber-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
+                <span class="text-[10px] font-semibold text-amber-400 group-hover:text-amber-400">USDT Binance</span>
                 <span class="text-xs font-bold text-slate-200 group-hover:text-white">Compra</span>
+                <span id="tasa-btn-usdt-compra" class="text-[11px] font-extrabold text-amber-400 font-mono">Bs. --,--</span>
             </button>
 
-            <button onclick="consultarP2P('venta', this)"
-                    class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-amber-600/20 hover:border-amber-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
-                <span class="text-[10px] font-semibold text-slate-400 group-hover:text-amber-400">USDT</span>
+            <button onclick="consultarP2P('venta', this)" class="btn-tasa flex-1 min-w-[130px] max-w-[160px] flex flex-col items-center justify-center p-3 bg-slate-700/50 hover:bg-amber-600/20 hover:border-amber-500/50 border border-slate-600 rounded-xl transition-all duration-200 group">
+                <span class="text-[10px] font-semibold text-amber-400 group-hover:text-amber-400">USDT Binance</span>
                 <span class="text-xs font-bold text-slate-200 group-hover:text-white">Venta</span>
+                <span id="tasa-btn-usdt-venta" class="text-[11px] font-extrabold text-amber-400 font-mono">Bs. --,--</span>
             </button>
         </div>
 
-        <div class="flex justify-center">
+        <div class="flex justify-center mb-10">
             <div id="caja-resultado" class="w-full max-w-sm bg-slate-900 border border-slate-700/60 rounded-2xl p-6 shadow-xl">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-bold text-white tracking-wide">Conversión</h2>
 
-                    <button onclick="limpiarCampos()" type="button" title="Limpiar campos" id="btnLimpiar"
-                            class="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-400 bg-slate-800/80 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg border border-slate-700 hover:border-rose-500/30 transition-all active:scale-95">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
+                    <button onclick="limpiarCampos()" type="button" title="Limpiar campos" id="btnLimpiar" class="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-400 bg-slate-800/80 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg border border-slate-700 hover:border-rose-500/30 transition-all active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         Limpiar
                     </button>
                 </div>
 
-                <div class="mb-5 flex items-center justify-center gap-2">
-                    <span id="titulo-tasa" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 transition-colors">
-                        Selecciona un tipo de cambio
-                    </span>
-                    <span id="valor-tasa" class="text-[11px] font-black text-slate-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700 transition-colors">
-                        Bs. 0.00
-                    </span>
+                <div class="mb-5 flex flex-col items-center justify-center gap-1.5">
+                    <div class="flex items-center gap-2">
+                        <span id="titulo-tasa" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 transition-colors">
+                            Selecciona un tipo de cambio
+                        </span>
+                        <span id="valor-tasa" class="text-[11px] font-black text-slate-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700 transition-colors">
+                            Bs. 0.00
+                        </span>
+                    </div>
+                    <span id="fecha-valor-bcv" class="text-[10px] text-emerald-400 font-medium hidden"></span>
                 </div>
 
                 <div class="space-y-4">
-
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1.5 text-left">Monto en Divisa</label>
                         <div class="relative flex items-center">
                             <span class="absolute left-3.5 text-xs font-bold text-slate-500 pointer-events-none">$ / €</span>
-                            <input type="text"
-                                   inputmode="decimal"
-                                   id="input-monto"
-                                   placeholder="0,00"
-                                   oninput="calcularDivisa(this)"
-                                   class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-white font-mono font-bold text-lg rounded-xl pl-12 pr-4 py-2.5 outline-none transition-all text-right">
+                            <input type="text" inputmode="decimal" id="input-monto" placeholder="0,00" oninput="calcularDivisa(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-white font-mono font-bold text-lg rounded-xl pl-12 pr-4 py-2.5 outline-none transition-all text-right">
                         </div>
                     </div>
 
@@ -95,33 +97,44 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5 text-left">Monto en Bolívares</label>
                         <div class="relative flex items-center">
                             <span class="absolute left-3.5 text-xs font-bold text-slate-500 pointer-events-none">BS</span>
-                            <input type="text"
-                                   inputmode="decimal"
-                                   id="input-bs"
-                                   placeholder="0,00"
-                                   oninput="calcularBs(this)"
-                                   class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-emerald-400 font-mono font-bold text-xl rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all text-right">
+                            <input type="text" inputmode="decimal" id="input-bs" placeholder="0,00" oninput="calcularBs(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-emerald-400 font-mono font-bold text-xl rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all text-right">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-6 pt-5 border-t border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div class="w-full bg-slate-900/80 border border-slate-700/60 rounded-2xl p-5 md:p-6 shadow-inner">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white tracking-wide text-center sm:text-left">Histórico de Tasas</h3>
+                    <p class="text-xs text-slate-400 text-center sm:text-left">Evolución reciente del valor respecto al Bolívar</p>
+                </div>
+
+                <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700/80 text-xs">
+                    <button onclick="cambiarRangoTiempo('1S', this)" class="btn-rango px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">Semana</button>
+                    <button onclick="cambiarRangoTiempo('1M', this)" class="btn-rango px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-colors">Mes</button>
+                    <button onclick="cambiarRangoTiempo('1A', this)" class="btn-rango px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-colors">Año</button>
+                </div>
+            </div>
+
+            <!-- Contenedor responsivo del canvas -->
+            <div class="relative w-full h-64 md:h-72">
+                <canvas id="graficoHistorico"></canvas>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="mt-8 pt-5 border-t border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <div>
                 <p class="text-xs font-semibold text-slate-200">Andrés Pestana - Venezuela 2026</p>
             </div>
-
             <div>
-                <p class="text-[11px] text-slate-400">Apoya el proyecto para mantenerlo gratis</p>
+                <p class="text-[11px] text-slate-400"></p>
             </div>
-
-            <a href="https://www.buymeacoffee.com/AndresPM" target="_blank" rel="noopener noreferrer"
-               class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM2 21h18v-2H2v2z"/>
-                </svg>
-                <span>Apoyame - Buymeacoffee</span>
+            <a href="https://www.buymeacoffee.com/AndresPM" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM2 21h18v-2H2v2z"/></svg>
+                <span>Apóyame - BuyMeACoffee</span>
             </a>
         </div>
 
