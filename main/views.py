@@ -2,15 +2,14 @@ from django.shortcuts import render
 
 # Create your views here.
 
-from django.shortcuts import render
-import requests
-from datetime import datetime
-from django.http import JsonResponse
-from django.core.cache import cache
 import datetime
 import re
 import bs4
+import requests
 import urllib3
+from django.core.cache import cache
+from django.http import JsonResponse
+from django.shortcuts import render
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -65,14 +64,13 @@ def tasa(request, moneda, cambio):
 
         info_api = respuesta.json()
 
-        # Parsear la fecha de forma segura
         fecha_str = info_api.get('fechaActualizacion', '')
         try:
             fecha_clean = fecha_str.replace('Z', '+00:00')
-            fecha_obj = datetime.fromisoformat(fecha_clean)
+            fecha_obj = datetime.datetime.fromisoformat(fecha_clean)
             fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
         except Exception:
-            fecha_formateada = datetime.now().strftime('%d/%m/%Y')
+            fecha_formateada = datetime.datetime.now().strftime('%d/%m/%Y')
 
         return JsonResponse({
             'fuente': info_api.get('fuente', '').capitalize(),
@@ -155,6 +153,8 @@ def promedio_usdt(request):
         "promedio_tasa_compra": round(sum(preciosCompra) / len(preciosCompra), 2),
         "promedio_tasa_venta": round(sum(preciosVenta) / len(preciosVenta), 2),
     })
+
+    cache.set(cache_key, infop2p, 300)
 
     return infop2p
 
