@@ -342,6 +342,7 @@ function consultarTasa(moneda, cambio, evento) {
             titulo.innerText = "PRÓXIMA TASA (BCV)";
             valorTasa.innerText = `Bs. ${proximaTasa.toFixed(2)}`;
             tasaActual = proximaTasa;
+            recalcularUltimoModificado();
 
             if (fechaValorSpan && fechaProximaTasa) {
                 fechaValorSpan.textContent = `Fecha Valor: ${fechaProximaTasa}`;
