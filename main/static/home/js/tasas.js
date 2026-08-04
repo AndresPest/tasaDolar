@@ -389,72 +389,87 @@ function consultarP2P(operacion, evento) {
 
 async function cargarTasasEnBotones() {
     try {
-        const [resDolar, resEuro, resUSDT, resProximaTasa] = await Promise.all([
-            fetch(`/tasa/dolar/oficial/`),
-            fetch(`/tasa/euro/oficial/`),
-            fetch(`/promedio_usdt/`),
-            fetch(API_RENDER_URL)
-        ]);
+        const fetchJSON = async (url) => {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) {
+                    console.warn(`Error ${res.status} al consultar: ${url}`);
+                    return {};
+                }
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return await res.json();
+                } else {
+                    console.warn(`La URL ${url} no devolvió JSON.`);
+                    return {};
+                }
+            } catch (e) {
+                console.error(`Error de red en ${url}:`, e);
+                return {};
+            }
+        };
 
         const [dataDolar, dataEuro, dataUSDT, data_proximaTasa] = await Promise.all([
-            resDolar.json(),
-            resEuro.json(),
-            resUSDT.json(),
-            resProximaTasa.json()
+            fetchJSON(`/tasa/dolar/oficial/`),
+            fetchJSON(`/tasa/euro/oficial/`),
+            fetchJSON(`/promedio_usdt/`),
+            fetchJSON(API_RENDER_URL)
         ]);
 
-        if (dataDolar.promedio) {
+        if (dataDolar && dataDolar.promedio) {
             tasaBCV = parseFloat(dataDolar.promedio);
-            document.getElementById('tasa-btn-dolar-oficial').innerText = `Bs. ${tasaBCV.toFixed(2)}`;
+            const elem = document.getElementById('tasa-btn-dolar-oficial');
+            if (elem) elem.innerText = `Bs. ${tasaBCV.toFixed(2)}`;
         }
 
-        if (data_proximaTasa.tasa) {
+        const btnFuturoSpan = document.getElementById('tasa-btn-bcv-futuro');
+        if (data_proximaTasa && data_proximaTasa.tasa) {
             proximaTasa = parseFloat(data_proximaTasa.tasa);
             fechaProximaTasa = data_proximaTasa.fecha_valor || "";
 
-            const btnFuturoSpan = document.getElementById('tasa-btn-bcv-futuro');
             if (btnFuturoSpan) {
                 btnFuturoSpan.innerText = `Bs. ${proximaTasa.toFixed(2)}`;
             }
         } else {
-            const btnFuturoSpan = document.getElementById('tasa-btn-bcv-futuro');
             if (btnFuturoSpan) {
                 btnFuturoSpan.innerText = "No disponible";
                 btnFuturoSpan.classList.add("text-slate-500");
             }
         }
 
-        if (dataEuro.promedio) {
+        if (dataEuro && dataEuro.promedio) {
             tasaEuro = parseFloat(dataEuro.promedio);
-            document.getElementById('tasa-btn-euro-oficial').innerText = `Bs. ${tasaEuro.toFixed(2)}`;
+            const elem = document.getElementById('tasa-btn-euro-oficial');
+            if (elem) elem.innerText = `Bs. ${tasaEuro.toFixed(2)}`;
         }
 
-        if (dataUSDT.promedio_tasa_compra) {
+        if (dataUSDT && dataUSDT.promedio_tasa_compra) {
             tasaUSDT_compra = parseFloat(dataUSDT.promedio_tasa_compra);
-            document.getElementById('tasa-btn-usdt-compra').innerText = `Bs. ${tasaUSDT_compra.toFixed(2)}`;
+            const elem = document.getElementById('tasa-btn-usdt-compra');
+            if (elem) elem.innerText = `Bs. ${tasaUSDT_compra.toFixed(2)}`;
         }
 
-        if (dataUSDT.promedio_tasa_venta) {
+        if (dataUSDT && dataUSDT.promedio_tasa_venta) {
             tasaUSDT_venta = parseFloat(dataUSDT.promedio_tasa_venta);
-            document.getElementById('tasa-btn-usdt-venta').innerText = `Bs. ${tasaUSDT_venta.toFixed(2)}`;
+            const elem = document.getElementById('tasa-btn-usdt-venta');
+            if (elem) elem.innerText = `Bs. ${tasaUSDT_venta.toFixed(2)}`;
         }
 
-        const btnDolar = document.getElementById('btn-dolar-oficial');
-        const valorTasa = document.getElementById('valor-tasa')
-        const inputDivisa = document.getElementById('input-monto');
-        const inputBs = document.getElementById('input-bs');
-
-        // Almacenamiento y formateo de fecha actual
+        // Configurar la fecha actual
         let fecha = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).format(new Date());
         fecha = fecha.replace(/ de /g, ' ');
         fechaActual = fecha.charAt(0).toUpperCase() + fecha.slice(1);
 
         const fechaValorSpan = document.getElementById("fecha-valor-bcv");
-        fechaValorSpan.classList.remove("hidden");
+        if (fechaValorSpan) fechaValorSpan.classList.remove("hidden");
+
+        const btnDolar = document.getElementById('btn-dolar-oficial');
+        const valorTasa = document.getElementById('valor-tasa');
+        const inputDivisa = document.getElementById('input-monto');
 
         if (btnDolar) {
-            inputDivisa.value = 1;
-            valorTasa.innerText = `Bs. ${tasaBCV}`;
+            if (inputDivisa) inputDivisa.value = 1;
+            if (valorTasa) valorTasa.innerText = `Bs. ${tasaBCV.toFixed(2)}`;
             consultarTasa('dolar', 'oficial', btnDolar);
         }
 
