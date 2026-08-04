@@ -16,11 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from main.views import tasa, home, promedio_usdt
+from main.views import tasa, home, promedio_usdt, proxima_tasa_bcv
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='index'),
     path('tasa/<str:moneda>/<str:cambio>/', tasa, name='api_tasa'),
-    path('promedio_usdt/', promedio_usdt , name='promedio_binance')
+    path('promedio_usdt/', promedio_usdt , name='promedio_binance'),
+    path('api/bcv/', proxima_tasa_bcv, name='proxima_tasa_bcv'),
 ]

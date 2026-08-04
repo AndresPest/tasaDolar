@@ -58,7 +58,7 @@ let chartInstance = null;
 let datosHistoricosCache = [];
 let monedaActualHistorico = 'dolar';
 let rangoActualHistorico = '1S';
-const API_RENDER_URL = "https://tasadolar.onrender.com/api/bcv";
+const API_RENDER_URL = "/api/bcv/";
 
 function renderizarGrafico(fechasOriginales, precios, etiqueta, colorLinea) {
     const ctx = document.getElementById('graficoHistorico').getContext('2d');

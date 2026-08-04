@@ -7,6 +7,25 @@ import requests
 from datetime import datetime
 from django.http import JsonResponse
 from django.core.cache import cache
+import datetime
+import re
+import bs4
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+CACHE_BCV = {
+    "tasa": None,
+    "fecha_valor": None,
+    "es_futura": False,
+    "ultima_actualizacion": None
+}
+
+MESES_BCV = {
+    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
+    "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+    "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12
+}
 
 def home (request):
     return render(request, 'home/index.html')
@@ -114,3 +133,63 @@ def promedio_usdt(request):
     })
 
     return infop2p
+
+def parsear_fecha_bcv(fecha_raw, fecha_str_texto):
+    if fecha_raw:
+        try:
+            return datetime.datetime.strptime(fecha_raw[:10], "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    try:
+        match = re.search(r'(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})', fecha_str_texto.lower())
+        if match:
+            dia, mes_str, ano = match.groups()
+            mes = MESES_BCV.get(mes_str)
+            if mes:
+                return datetime.date(int(ano), mes, int(dia))
+    except Exception:
+        pass
+    return None
+
+def proxima_tasa_bcv(request):
+    ahora = datetime.datetime.now()
+
+    if CACHE_BCV["ultima_actualizacion"]:
+        diferencia = (ahora - CACHE_BCV["ultima_actualizacion"]).total_seconds()
+        if diferencia < 900:
+            if CACHE_BCV["es_futura"]:
+                return JsonResponse({"disponible": True, "tasa": CACHE_BCV["tasa"], "fecha_valor": CACHE_BCV["fecha_valor"]})
+            else:
+                return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None, "fecha_valor": CACHE_BCV["fecha_valor"]})
+
+    try:
+        url = "https://www.bcv.org.ve/"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        res = requests.get(url, headers=headers, verify=False, timeout=10)
+        if res.status_code == 200:
+            soup = bs4.BeautifulSoup(res.content, "html.parser")
+            fecha_tag = soup.find("span", class_="date-display-single")
+            dolar_div = soup.find("div", id="dolar")
+            tasa_tag = dolar_div.find("strong") if dolar_div else None
+
+            if fecha_tag and tasa_tag:
+                tasa_val = float(tasa_tag.text.strip().replace('.', '').replace(',', '.'))
+                fecha_texto = fecha_tag.text.strip()
+                fecha_iso = fecha_tag.get("content", None)
+                fecha_obj = parsear_fecha_bcv(fecha_iso, fecha_texto)
+                hoy = datetime.date.today()
+                es_futura = (fecha_obj > hoy) if fecha_obj else False
+
+                CACHE_BCV["tasa"] = tasa_val
+                CACHE_BCV["fecha_valor"] = fecha_texto
+                CACHE_BCV["es_futura"] = es_futura
+                CACHE_BCV["ultima_actualizacion"] = ahora
+
+                if es_futura:
+                    return JsonResponse({"disponible": True, "tasa": tasa_val, "fecha_valor": fecha_texto})
+                else:
+                    return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None, "fecha_valor": fecha_texto})
+    except Exception as e:
+        print(f"Error scraping BCV: {e}")
+
+    return JsonResponse({"error": "No se pudo obtener la información del BCV"}, status=503)
