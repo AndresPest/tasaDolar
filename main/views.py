@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 
 import datetime
+import zoneinfo
 import re
 import bs4
 import requests
@@ -183,20 +184,26 @@ def parsear_fecha_bcv(fecha_raw, fecha_str_texto):
         pass
     return None
 
+
 def proxima_tasa_bcv(request):
-    ahora = datetime.datetime.now()
+    # Usar hora y fecha oficial de Venezuela en lugar de UTC del servidor
+    tz_ve = zoneinfo.ZoneInfo("America/Caracas")
+    ahora = datetime.datetime.now(tz_ve)
+    hoy = ahora.date()
 
     if CACHE_BCV["ultima_actualizacion"]:
         diferencia = (ahora - CACHE_BCV["ultima_actualizacion"]).total_seconds()
         if diferencia < 900:
             if CACHE_BCV["es_futura"]:
-                return JsonResponse({"disponible": True, "tasa": CACHE_BCV["tasa"], "fecha_valor": CACHE_BCV["fecha_valor"]})
+                return JsonResponse(
+                    {"disponible": True, "tasa": CACHE_BCV["tasa"], "fecha_valor": CACHE_BCV["fecha_valor"]})
             else:
-                return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None, "fecha_valor": CACHE_BCV["fecha_valor"]})
+                return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None,
+                                     "fecha_valor": CACHE_BCV["fecha_valor"]})
 
     try:
         url = "https://www.bcv.org.ve/"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         res = requests.get(url, headers=headers, verify=False, timeout=10)
         if res.status_code == 200:
             soup = bs4.BeautifulSoup(res.content, "html.parser")
@@ -209,7 +216,8 @@ def proxima_tasa_bcv(request):
                 fecha_texto = fecha_tag.text.strip()
                 fecha_iso = fecha_tag.get("content", None)
                 fecha_obj = parsear_fecha_bcv(fecha_iso, fecha_texto)
-                hoy = datetime.date.today()
+
+                # Evaluamos contra la fecha local venezolana
                 es_futura = (fecha_obj > hoy) if fecha_obj else False
 
                 CACHE_BCV["tasa"] = tasa_val
@@ -220,7 +228,8 @@ def proxima_tasa_bcv(request):
                 if es_futura:
                     return JsonResponse({"disponible": True, "tasa": tasa_val, "fecha_valor": fecha_texto})
                 else:
-                    return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None, "fecha_valor": fecha_texto})
+                    return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None,
+                                         "fecha_valor": fecha_texto})
     except Exception as e:
         print(f"Error scraping BCV: {e}")
 
