@@ -103,8 +103,10 @@ def obtener_tasa():
     ahora = datetime.datetime.now(tz_ve)
 
     if CACHE_TASA["ultima_actualizacion"]:
+        mismo_dia = CACHE_TASA["ultima_actualizacion"].date() == ahora.date()
         diferencia = (ahora - CACHE_TASA["ultima_actualizacion"]).total_seconds()
-        if diferencia < 900:
+
+        if mismo_dia and diferencia < 900:
             return {
                 "disponible": CACHE_TASA["es_futura"],
                 "dolar": CACHE_TASA["dolar"],

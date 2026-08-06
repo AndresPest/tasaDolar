@@ -465,7 +465,7 @@ async function cargarTasasEnBotones() {
         const btnFuturoDolarSpan = document.getElementById('tasa-btn-bcv-futuro');
         const btnFuturoEuroSpan = document.getElementById('tasa-btn-euro-futuro');
 
-        if (data_proximaTasa && data_proximaTasa.dolar && data_proximaTasa.euro) {
+        if (data_proximaTasa && data_proximaTasa.disponible && data_proximaTasa.dolar && data_proximaTasa.euro) {
             fechaProximaTasa = data_proximaTasa.fecha_valor || "";
 
             proximaTasa_dolar = parseFloat(data_proximaTasa.dolar);
@@ -480,6 +480,10 @@ async function cargarTasasEnBotones() {
                 btnFuturoEuroSpan.classList.remove("text-slate-500");
             }
         } else {
+            proximaTasa_dolar = 0;
+            proximaTasa_euro = 0;
+            fechaProximaTasa = "";
+
             if (btnFuturoDolarSpan) {
                 btnFuturoDolarSpan.innerText = "No disponible";
                 btnFuturoDolarSpan.classList.add("text-slate-500");
