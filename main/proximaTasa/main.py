@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import urllib3
+import zoneinfo
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -19,7 +20,8 @@ app.add_middleware(
 )
 
 CACHE_TASA = {
-    "tasa": None,
+    "dolar": None,
+    "euro": None,
     "fecha_valor": None,
     "es_futura": False,
     "ultima_actualizacion": None
@@ -33,8 +35,6 @@ MESES = {
 
 
 def parsear_fecha_bcv(fecha_raw, fecha_str_texto):
-    """Convierte la fecha extraída del BCV a un objeto datetime.date"""
-    # Intentar parsear el atributo content ISO (ej: 2026-08-04T00:00:00...)
     if fecha_raw:
         try:
             return datetime.datetime.strptime(fecha_raw[:10], "%Y-%m-%d").date()
@@ -64,23 +64,31 @@ def extraer_bcv():
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, "html.parser")
             fecha_tag = soup.find("span", class_="date-display-single")
-            dolar_div = soup.find("div", id="dolar")
-            tasa_tag = dolar_div.find("strong") if dolar_div else None
 
-            if fecha_tag and tasa_tag:
-                tasa_val = float(tasa_tag.text.strip().replace('.', '').replace(',', '.'))
+            dolar_div = soup.find("div", id="dolar")
+            euro_div = soup.find("div", id="euro")
+
+            dolar_tag = dolar_div.find("strong") if dolar_div else None
+            euro_tag = euro_div.find("strong") if euro_div else None
+
+            if fecha_tag and dolar_tag and euro_tag:
+                tasa_dolar = float(dolar_tag.text.strip().replace('.', '').replace(',', '.'))
+                tasa_euro = float(euro_tag.text.strip().replace('.', '').replace(',', '.'))
+
                 fecha_texto = fecha_tag.text.strip()
                 fecha_iso = fecha_tag.get("content", None)
 
                 fecha_obj = parsear_fecha_bcv(fecha_iso, fecha_texto)
-                hoy = datetime.date.today()
+
+                tz_ve = zoneinfo.ZoneInfo("America/Caracas")
+                hoy = datetime.datetime.now(tz_ve).date()
 
                 es_futura = (fecha_obj > hoy) if fecha_obj else False
 
-                return tasa_val, fecha_texto, es_futura
+                return tasa_dolar, tasa_euro, fecha_texto, es_futura
     except Exception as e:
         print(f"Error scraping BCV: {e}")
-    return None, None, False
+    return None, None, None, False
 
 
 @app.get("/")
@@ -91,47 +99,35 @@ def home():
 @app.get("/api/bcv")
 @app.get("/api/bcv/")
 def obtener_tasa():
-    ahora = datetime.datetime.now()
+    tz_ve = zoneinfo.ZoneInfo("America/Caracas")
+    ahora = datetime.datetime.now(tz_ve)
 
     if CACHE_TASA["ultima_actualizacion"]:
         diferencia = (ahora - CACHE_TASA["ultima_actualizacion"]).total_seconds()
         if diferencia < 900:
-            if CACHE_TASA["es_futura"]:
-                return {
-                    "disponible": True,
-                    "tasa": CACHE_TASA["tasa"],
-                    "fecha_valor": CACHE_TASA["fecha_valor"],
-                    "origen": "memoria_cache"
-                }
-            else:
-                return {
-                    "disponible": False,
-                    "mensaje": "Tasa futura no disponible aún",
-                    "tasa": None,
-                    "fecha_valor": CACHE_TASA["fecha_valor"]
-                }
+            return {
+                "disponible": CACHE_TASA["es_futura"],
+                "dolar": CACHE_TASA["dolar"],
+                "euro": CACHE_TASA["euro"],
+                "fecha_valor": CACHE_TASA["fecha_valor"],
+                "origen": "memoria_cache"
+            }
 
-    tasa, fecha, es_futura = extraer_bcv()
+    dolar, euro, fecha, es_futura = extraer_bcv()
 
-    if tasa is not None:
-        CACHE_TASA["tasa"] = tasa
+    if dolar is not None and euro is not None:
+        CACHE_TASA["dolar"] = dolar
+        CACHE_TASA["euro"] = euro
         CACHE_TASA["fecha_valor"] = fecha
         CACHE_TASA["es_futura"] = es_futura
         CACHE_TASA["ultima_actualizacion"] = ahora
 
-        if es_futura:
-            return {
-                "disponible": True,
-                "tasa": tasa,
-                "fecha_valor": fecha,
-                "origen": "bcv_en_vivo"
-            }
-        else:
-            return {
-                "disponible": False,
-                "mensaje": "Tasa futura no disponible aún",
-                "tasa": None,
-                "fecha_valor": fecha
-            }
+        return {
+            "disponible": es_futura,
+            "dolar": dolar,
+            "euro": euro,
+            "fecha_valor": fecha,
+            "origen": "bcv_en_vivo"
+        }
 
     return {"error": "No se pudo obtener la información del BCV"}, 503

@@ -15,7 +15,8 @@ from django.shortcuts import render
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 CACHE_BCV = {
-    "tasa": None,
+    "dolar": None,
+    "euro": None,
     "fecha_valor": None,
     "es_futura": False,
     "ultima_actualizacion": None
@@ -186,51 +187,61 @@ def parsear_fecha_bcv(fecha_raw, fecha_str_texto):
 
 
 def proxima_tasa_bcv(request):
-    # Usar hora y fecha oficial de Venezuela en lugar de UTC del servidor
     tz_ve = zoneinfo.ZoneInfo("America/Caracas")
     ahora = datetime.datetime.now(tz_ve)
     hoy = ahora.date()
 
+    # 1. Verificar Caché en memoria (15 min)
     if CACHE_BCV["ultima_actualizacion"]:
         diferencia = (ahora - CACHE_BCV["ultima_actualizacion"]).total_seconds()
         if diferencia < 900:
-            if CACHE_BCV["es_futura"]:
-                return JsonResponse(
-                    {"disponible": True, "tasa": CACHE_BCV["tasa"], "fecha_valor": CACHE_BCV["fecha_valor"]})
-            else:
-                return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None,
-                                     "fecha_valor": CACHE_BCV["fecha_valor"]})
+            return JsonResponse({
+                "disponible": CACHE_BCV["es_futura"],
+                "dolar": CACHE_BCV["dolar"],
+                "euro": CACHE_BCV["euro"],
+                "fecha_valor": CACHE_BCV["fecha_valor"]
+            })
 
+    # 2. Scraping al BCV (Dólar y Euro)
     try:
         url = "https://www.bcv.org.ve/"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         res = requests.get(url, headers=headers, verify=False, timeout=10)
+
         if res.status_code == 200:
             soup = bs4.BeautifulSoup(res.content, "html.parser")
             fecha_tag = soup.find("span", class_="date-display-single")
-            dolar_div = soup.find("div", id="dolar")
-            tasa_tag = dolar_div.find("strong") if dolar_div else None
 
-            if fecha_tag and tasa_tag:
-                tasa_val = float(tasa_tag.text.strip().replace('.', '').replace(',', '.'))
+            dolar_div = soup.find("div", id="dolar")
+            euro_div = soup.find("div", id="euro")
+
+            dolar_tag = dolar_div.find("strong") if dolar_div else None
+            euro_tag = euro_div.find("strong") if euro_div else None
+
+            if fecha_tag and dolar_tag and euro_tag:
+                tasa_dolar = float(dolar_tag.text.strip().replace('.', '').replace(',', '.'))
+                tasa_euro = float(euro_tag.text.strip().replace('.', '').replace(',', '.'))
+
                 fecha_texto = fecha_tag.text.strip()
                 fecha_iso = fecha_tag.get("content", None)
                 fecha_obj = parsear_fecha_bcv(fecha_iso, fecha_texto)
 
-                # Evaluamos contra la fecha local venezolana
+                # Evaluamos si la fecha del BCV es estrictamente mayor a hoy
                 es_futura = (fecha_obj > hoy) if fecha_obj else False
 
-                CACHE_BCV["tasa"] = tasa_val
+                CACHE_BCV["dolar"] = tasa_dolar
+                CACHE_BCV["euro"] = tasa_euro
                 CACHE_BCV["fecha_valor"] = fecha_texto
                 CACHE_BCV["es_futura"] = es_futura
                 CACHE_BCV["ultima_actualizacion"] = ahora
 
-                if es_futura:
-                    return JsonResponse({"disponible": True, "tasa": tasa_val, "fecha_valor": fecha_texto})
-                else:
-                    return JsonResponse({"disponible": False, "mensaje": "Tasa futura no disponible aún", "tasa": None,
-                                         "fecha_valor": fecha_texto})
+                return JsonResponse({
+                    "disponible": es_futura,
+                    "dolar": tasa_dolar,
+                    "euro": tasa_euro,
+                    "fecha_valor": fecha_texto
+                })
     except Exception as e:
-        print(f"Error scraping BCV: {e}")
+        print(f"Error scraping BCV en Django: {e}")
 
     return JsonResponse({"error": "No se pudo obtener la información del BCV"}, status=503)

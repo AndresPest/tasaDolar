@@ -10,7 +10,7 @@ const TEMAS = {
         focusBorder: 'focus:border-emerald-500',
         focusRing: 'focus:ring-emerald-500',
     },
-    proximaTasa: {
+    proximaTasa_dolar: {
         texto: 'text-lime-400',
         bgSubtil: 'bg-lime-500/10',
         bordeSubtil: 'border-lime-500/20',
@@ -18,7 +18,7 @@ const TEMAS = {
         btnBorde: 'border-lime-500',
         btnRing: 'ring-2',
         btnRingColor: 'ring-lime-500/50',
-        focusBorder: 'focus:lime-lime-500',
+        focusBorder: 'focus:border-lime-500',
         focusRing: 'focus:ring-lime-500',
     },
     euro: {
@@ -31,6 +31,17 @@ const TEMAS = {
         btnRingColor: 'ring-blue-500/50',
         focusBorder: 'focus:border-blue-500',
         focusRing: 'focus:ring-blue-500',
+    },
+    proximaTasa_euro: {
+        texto: 'text-cyan-400',
+        bgSubtil: 'bg-cyan-500/10',
+        bordeSubtil: 'border-cyan-500/20',
+        btnBg: 'bg-cyan-600/30',
+        btnBorde: 'border-cyan-500',
+        btnRing: 'ring-2',
+        btnRingColor: 'ring-cyan-500/50',
+        focusBorder: 'focus:border-cyan-500',
+        focusRing: 'focus:ring-cyan-500',
     },
     usdt: {
         texto: 'text-amber-400',
@@ -47,7 +58,8 @@ const TEMAS = {
 
 let tasaActual = 0;
 let tasaBCV = 0;
-let proximaTasa = 0;
+let proximaTasa_dolar = 0;
+let proximaTasa_euro = 0;
 let fechaActual = "";
 let fechaProximaTasa = "";
 let tasaEuro = 0;
@@ -194,9 +206,15 @@ function cambiarRangoTiempo(rango, elementoBoton) {
 
 function temaMoneda(tipoMoneda, tipoCambio, botonPresionado) {
     let tema = TEMAS[tipoMoneda] || TEMAS.dolar;
+    console.log("entre 1");
+    if(tipoMoneda === 'dolar' && tipoCambio === 'futuro'){
+        tema = TEMAS["proximaTasa_dolar"];
+        console.log("entre 2");
+    }
 
-    if(tipoCambio === 'futuro'){
-        tema = TEMAS["proximaTasa"];
+    if(tipoMoneda === 'euro' && tipoCambio === 'futuro'){
+        tema = TEMAS["proximaTasa_euro"];
+        console.log("entre 3");
     }
 
     document.querySelectorAll('.btn-tasa').forEach(btn => {
@@ -205,6 +223,7 @@ function temaMoneda(tipoMoneda, tipoCambio, botonPresionado) {
             'bg-blue-600/30', 'border-blue-500', 'ring-blue-500/50',
             'bg-amber-600/30', 'border-amber-500', 'ring-amber-500/50',
             'bg-lime-600/30', 'border-lime-500', 'ring-lime-500/50',
+            'bg-cyan-600/30', 'border-cyan-500', 'ring-cyan-500/50',
             'ring-2'
         );
         btn.classList.add('bg-slate-700/50', 'border-slate-600');
@@ -227,13 +246,13 @@ function temaMoneda(tipoMoneda, tipoCambio, botonPresionado) {
 
     const totalDiv = document.getElementById('resultado-total') && document.getElementById('resultado-total-container');
     if (totalDiv) {
-        totalDiv.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-slate-100');
+        totalDiv.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-cyan-400', 'text-slate-100');
         totalDiv.classList.add(tema.texto);
     }
 
     const fechaValorSpan = document.getElementById("fecha-valor-bcv");
     if (fechaValorSpan) {
-        fechaValorSpan.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-slate-100');
+        fechaValorSpan.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-cyan-400', 'text-slate-100');
         fechaValorSpan.classList.add(tema.texto);
     }
 
@@ -244,10 +263,11 @@ function temaMoneda(tipoMoneda, tipoCambio, botonPresionado) {
                 'focus:border-emerald-500', 'focus:ring-emerald-500',
                 'focus:border-blue-500', 'focus:ring-blue-500',
                 'focus:border-amber-500', 'focus:ring-amber-500',
-                'focus:border-lime-500', 'focus:ring-lime-500'
+                'focus:border-lime-500', 'focus:ring-lime-500',
+                'focus:border-cyan-500', 'focus:ring-cyan-500'
             );
 
-            input.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-white');
+            input.classList.remove('text-emerald-400', 'text-blue-400', 'text-amber-400', 'text-lime-400', 'text-cyan-400', 'text-white');
             input.classList.add(tema.texto);
 
             input.classList.add(tema.focusBorder, tema.focusRing);
@@ -317,6 +337,7 @@ function consultarTasa(moneda, cambio, evento) {
     const titulo = document.getElementById('titulo-tasa');
     const valorTasa = document.getElementById('valor-tasa');
     const btnSpanTasa = document.getElementById("tasa-btn-bcv-futuro");
+    const btnProxEuro = document.getElementById("tasa-btn-euro-futuro");
     const fechaValorSpan = document.getElementById("fecha-valor-bcv");
     const inputDivisa = document.getElementById("input-monto");
     const inputMonto = document.getElementById("input-bs");
@@ -330,7 +351,7 @@ function consultarTasa(moneda, cambio, evento) {
     if(moneda === 'dolar'){
         if(cambio === 'futuro'){
 
-            if (!proximaTasa) {
+            if (!proximaTasa_dolar) {
                 titulo.innerText = "PRÓXIMA TASA";
                 valorTasa.innerText = "No disponible";
                 fechaValorSpan.textContent = `No disponible`;
@@ -340,8 +361,8 @@ function consultarTasa(moneda, cambio, evento) {
             }
 
             titulo.innerText = "PRÓXIMA TASA (BCV)";
-            valorTasa.innerText = `Bs. ${proximaTasa.toFixed(2)}`;
-            tasaActual = proximaTasa;
+            valorTasa.innerText = `Bs. ${proximaTasa_dolar.toFixed(2)}`;
+            tasaActual = proximaTasa_dolar;
             recalcularUltimoModificado();
 
             if (fechaValorSpan && fechaProximaTasa) {
@@ -355,10 +376,30 @@ function consultarTasa(moneda, cambio, evento) {
         }
 
     } else if(moneda === 'euro'){
-        valorTasa.innerText = `Bs. ${tasaEuro.toFixed(2)}`;
-        fechaValorSpan.textContent = `Fecha Valor: ${fechaActual}`;
-        tasaActual = tasaEuro;
-        recalcularUltimoModificado();
+        if (cambio === 'futuro') {
+            if (!proximaTasa_euro) {
+                titulo.innerText = "PRÓXIMA TASA EURO";
+                valorTasa.innerText = "No disponible";
+                fechaValorSpan.textContent = `No disponible`;
+                inputDivisa.disabled = true;
+                inputMonto.disabled = true;
+                return;
+            }
+
+            titulo.innerText = "PRÓXIMA TASA EURO (BCV)";
+            valorTasa.innerText = `Bs. ${proximaTasa_euro.toFixed(2)}`;
+            tasaActual = proximaTasa_euro;
+            recalcularUltimoModificado();
+
+            if (fechaValorSpan && fechaProximaTasa) {
+                fechaValorSpan.textContent = `Fecha Valor: ${fechaProximaTasa}`;
+            }
+        } else {
+            valorTasa.innerText = `Bs. ${tasaEuro.toFixed(2)}`;
+            fechaValorSpan.textContent = `Fecha Valor: ${fechaActual}`;
+            tasaActual = tasaEuro;
+            recalcularUltimoModificado();
+        }
     } else {
         console.error("ERROR MONEDA");
     }
@@ -423,18 +464,31 @@ async function cargarTasasEnBotones() {
             if (elem) elem.innerText = `Bs. ${tasaBCV.toFixed(2)}`;
         }
 
-        const btnFuturoSpan = document.getElementById('tasa-btn-bcv-futuro');
-        if (data_proximaTasa && data_proximaTasa.tasa) {
-            proximaTasa = parseFloat(data_proximaTasa.tasa);
+        const btnFuturoDolarSpan = document.getElementById('tasa-btn-bcv-futuro');
+        const btnFuturoEuroSpan = document.getElementById('tasa-btn-euro-futuro');
+
+        if (data_proximaTasa && data_proximaTasa.dolar && data_proximaTasa.euro) {
             fechaProximaTasa = data_proximaTasa.fecha_valor || "";
 
-            if (btnFuturoSpan) {
-                btnFuturoSpan.innerText = `Bs. ${proximaTasa.toFixed(2)}`;
+            proximaTasa_dolar = parseFloat(data_proximaTasa.dolar);
+            if (btnFuturoDolarSpan) {
+                btnFuturoDolarSpan.innerText = `Bs. ${proximaTasa_dolar.toFixed(2)}`;
+                btnFuturoDolarSpan.classList.remove("text-slate-500");
+            }
+
+            proximaTasa_euro = parseFloat(data_proximaTasa.euro);
+            if (btnFuturoEuroSpan) {
+                btnFuturoEuroSpan.innerText = `Bs. ${proximaTasa_euro.toFixed(2)}`;
+                btnFuturoEuroSpan.classList.remove("text-slate-500");
             }
         } else {
-            if (btnFuturoSpan) {
-                btnFuturoSpan.innerText = "No disponible";
-                btnFuturoSpan.classList.add("text-slate-500");
+            if (btnFuturoDolarSpan) {
+                btnFuturoDolarSpan.innerText = "No disponible";
+                btnFuturoDolarSpan.classList.add("text-slate-500");
+            }
+            if (btnFuturoEuroSpan) {
+                btnFuturoEuroSpan.innerText = "No disponible";
+                btnFuturoEuroSpan.classList.add("text-slate-500");
             }
         }
 
