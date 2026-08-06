@@ -206,15 +206,13 @@ function cambiarRangoTiempo(rango, elementoBoton) {
 
 function temaMoneda(tipoMoneda, tipoCambio, botonPresionado) {
     let tema = TEMAS[tipoMoneda] || TEMAS.dolar;
-    console.log("entre 1");
+
     if(tipoMoneda === 'dolar' && tipoCambio === 'futuro'){
         tema = TEMAS["proximaTasa_dolar"];
-        console.log("entre 2");
     }
 
     if(tipoMoneda === 'euro' && tipoCambio === 'futuro'){
         tema = TEMAS["proximaTasa_euro"];
-        console.log("entre 3");
     }
 
     document.querySelectorAll('.btn-tasa').forEach(btn => {
