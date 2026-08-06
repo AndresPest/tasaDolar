@@ -713,6 +713,12 @@
   .uppercase {
     text-transform: uppercase;
   }
+  .\!underline {
+    text-decoration-line: underline !important;
+  }
+  .underline-offset-2 {
+    text-underline-offset: 2px;
+  }
   .shadow-2xl {
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -906,6 +912,9 @@
       .hover\:bg-rose-500\/10:hover {
         background-color: color-mix(in oklab, var(--color-rose-500) 10%, transparent);
       }
+    }
+    .hover\:text-cyan-400:hover {
+      color: var(--color-cyan-400);
     }
     .hover\:text-rose-400:hover {
       color: var(--color-rose-400);
