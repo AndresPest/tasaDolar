@@ -90,7 +90,7 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5 text-left">Monto en Divisa</label>
                         <div class="relative flex items-center">
                             <span class="absolute left-3.5 text-xs font-bold text-slate-500 pointer-events-none">$ / €</span>
-                            <input type="text" inputmode="decimal" id="input-monto" placeholder="0,00" oninput="calcularDivisa(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-white font-mono font-bold text-lg rounded-xl pl-12 pr-4 py-2.5 outline-none transition-all text-right">
+                            <input type="text" inputmode="decimal" id="input-monto" placeholder="0,00" oninput="calcularDivisa(this)" onfocus="moverCursorAlFinal(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-white font-mono font-bold text-lg rounded-xl pl-12 pr-4 py-2.5 outline-none transition-all text-right">
                         </div>
                     </div>
 
@@ -104,7 +104,7 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1.5 text-left">Monto en Bolívares</label>
                         <div class="relative flex items-center">
                             <span class="absolute left-3.5 text-xs font-bold text-slate-500 pointer-events-none">BS</span>
-                            <input type="text" inputmode="decimal" id="input-bs" placeholder="0,00" oninput="calcularBs(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-emerald-400 font-mono font-bold text-xl rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all text-right">
+                            <input type="text" inputmode="decimal" id="input-bs" placeholder="0,00" oninput="calcularBs(this)" onfocus="moverCursorAlFinal(this)" class="w-full bg-slate-950 border border-slate-700/80 focus:border-emerald-500 text-emerald-400 font-mono font-bold text-xl rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all text-right">
                         </div>
                     </div>
                 </div>

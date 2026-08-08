@@ -572,6 +572,13 @@ function formatearAlSalir(inputElement) {
     }
 }
 
+function moverCursorAlFinal(input) {
+    setTimeout(() => {
+        const longitud = input.value.length;
+        input.setSelectionRange(longitud, longitud);
+    }, 0);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     cargarTasasEnBotones();
 });
