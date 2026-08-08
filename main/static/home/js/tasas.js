@@ -581,5 +581,15 @@ function moverCursorAlFinal(input) {
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarTasasEnBotones();
+
+    const inputsMonto = [document.getElementById('input-monto'), document.getElementById('input-bs')];
+
+    inputsMonto.forEach(input => {
+        if (!input) return;
+
+        ['click', 'focus', 'keyup', 'select'].forEach(evento => {
+            input.addEventListener(evento, () => moverCursorAlFinal(input));
+        });
+    });
 });
 

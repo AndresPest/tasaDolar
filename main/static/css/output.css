@@ -983,6 +983,9 @@
     }
   }
 }
+input {
+  caret-color: transparent !important;
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
