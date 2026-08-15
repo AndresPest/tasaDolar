@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@source "../templates";
+@source "../static/js";
+
+input {
+    caret-color: transparent !important;
+}
