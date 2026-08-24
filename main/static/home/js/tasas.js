@@ -319,22 +319,26 @@ function enmascararMonto(input) {
     let valor = input.value;
     if (!valor) return;
 
-    valor = valor.replace(/\./g, ',');
+    const ultimoPunto = valor.lastIndexOf('.');
+    const ultimaComa = valor.lastIndexOf(',');
+    const indiceDecimal = Math.max(ultimoPunto, ultimaComa);
 
-    const partesComa = valor.split(',');
-    if (partesComa.length > 2) {
-        valor = partesComa[0] + ',' + partesComa.slice(1).join('');
+    let parteEntera = '';
+    let parteDecimal = '';
+
+    if (indiceDecimal !== -1 && (ultimoPunto > ultimaComa || valor.includes(','))) {
+        parteEntera = valor.slice(0, indiceDecimal).replace(/\D/g, '');
+        parteDecimal = valor.slice(indiceDecimal + 1).replace(/\D/g, '').slice(0, 2);
+    } else {
+        parteEntera = valor.replace(/\D/g, '');
     }
 
-    let partes = valor.split(',');
-    let parteEntera = partes[0].replace(/\D/g, '');
-    parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const enteraFormateada = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-    if (partes.length > 1) {
-        let parteDecimal = partes[1].replace(/\D/g, '').slice(0, 2);
-        input.value = `${parteEntera},${parteDecimal}`;
+    if (indiceDecimal !== -1 && (ultimoPunto > -1 || ultimaComa > -1) && (valor.endsWith(',') || valor.endsWith('.') || parteDecimal.length > 0)) {
+        input.value = `${enteraFormateada},${parteDecimal}`;
     } else {
-        input.value = parteEntera;
+        input.value = enteraFormateada;
     }
 }
 
