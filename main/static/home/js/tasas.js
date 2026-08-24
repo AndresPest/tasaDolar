@@ -317,12 +317,19 @@ function obtenerNumeroReal(texto) {
 
 function enmascararMonto(input) {
     let valor = input.value;
-    if (!valor)
-        return;
+    if (!valor) return;
+
+    valor = valor.replace(/\./g, ',');
+
+    const partesComa = valor.split(',');
+    if (partesComa.length > 2) {
+        valor = partesComa[0] + ',' + partesComa.slice(1).join('');
+    }
 
     let partes = valor.split(',');
     let parteEntera = partes[0].replace(/\D/g, '');
     parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
     if (partes.length > 1) {
         let parteDecimal = partes[1].replace(/\D/g, '').slice(0, 2);
         input.value = `${parteEntera},${parteDecimal}`;
