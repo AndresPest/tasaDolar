@@ -319,26 +319,26 @@ function enmascararMonto(input) {
     let valor = input.value;
     if (!valor) return;
 
-    const ultimoPunto = valor.lastIndexOf('.');
-    const ultimaComa = valor.lastIndexOf(',');
-    const indiceDecimal = Math.max(ultimoPunto, ultimaComa);
+    if (!valor.includes(',')) {
+        const cantidadPuntos = (valor.match(/\./g) || []).length;
 
-    let parteEntera = '';
-    let parteDecimal = '';
-
-    if (indiceDecimal !== -1 && (ultimoPunto > ultimaComa || valor.includes(','))) {
-        parteEntera = valor.slice(0, indiceDecimal).replace(/\D/g, '');
-        parteDecimal = valor.slice(indiceDecimal + 1).replace(/\D/g, '').slice(0, 2);
-    } else {
-        parteEntera = valor.replace(/\D/g, '');
+        if (cantidadPuntos === 1) {
+            valor = valor.replace('.', ',');
+        } else {
+            valor = valor.replace(/\./g, '');
+        }
     }
 
-    const enteraFormateada = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    let partes = valor.split(',');
 
-    if (indiceDecimal !== -1 && (ultimoPunto > -1 || ultimaComa > -1) && (valor.endsWith(',') || valor.endsWith('.') || parteDecimal.length > 0)) {
-        input.value = `${enteraFormateada},${parteDecimal}`;
+    let parteEntera = partes[0].replace(/\D/g, '');
+    parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    if (partes.length > 1) {
+        let parteDecimal = partes[1].replace(/\D/g, '').slice(0, 2);
+        input.value = `${parteEntera},${parteDecimal}`;
     } else {
-        input.value = enteraFormateada;
+        input.value = parteEntera;
     }
 }
 
