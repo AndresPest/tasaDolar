@@ -70,6 +70,7 @@ let chartInstance = null;
 let datosHistoricosCache = [];
 let monedaActualHistorico = 'dolar';
 let rangoActualHistorico = '1S';
+let sobrescribir = false;
 const API_RENDER_URL = "/api/bcv/";
 
 function renderizarGrafico(fechasOriginales, precios, etiqueta, colorLinea) {
@@ -317,17 +318,26 @@ function obtenerNumeroReal(texto) {
 
 function enmascararMonto(input) {
     let valor = input.value;
-    if (!valor)
-        return;
+    if (!valor) return;
 
     let partes = valor.split(',');
+
     let parteEntera = partes[0].replace(/\D/g, '');
+
     parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
     if (partes.length > 1) {
         let parteDecimal = partes[1].replace(/\D/g, '').slice(0, 2);
         input.value = `${parteEntera},${parteDecimal}`;
     } else {
         input.value = parteEntera;
+    }
+}
+
+function seleccionarTodoEInsertar(input) {
+    if (input && input.value) {
+        input.select();
+        debeSobrescribir = true;
     }
 }
 
@@ -403,6 +413,9 @@ function consultarTasa(moneda, cambio, evento) {
     }
 
     cargarHistorico(moneda);
+
+    inputDivisa.focus();
+    seleccionarTodoEInsertar(inputDivisa);
 }
 
 function consultarP2P(operacion, evento) {
@@ -528,10 +541,19 @@ async function cargarTasasEnBotones() {
             if (inputDivisa) inputDivisa.value = 1;
             if (valorTasa) valorTasa.innerText = `Bs. ${tasaBCV.toFixed(2)}`;
             consultarTasa('dolar', 'oficial', btnDolar);
+
+            if (inputDivisa) seleccionarTodoEInsertar(inputDivisa);
         }
 
     } catch (err) {
         console.error("Error al cargar las tasas:", err);
+    }
+
+    const inputDivisa = document.getElementById("input-monto");
+
+    if (inputDivisa) {
+        inputDivisa.focus();
+        seleccionarTodoEInsertar(inputDivisa);
     }
 }
 
@@ -587,8 +609,25 @@ document.addEventListener('DOMContentLoaded', () => {
     inputsMonto.forEach(input => {
         if (!input) return;
 
-        ['click', 'focus', 'keyup', 'select'].forEach(evento => {
-            input.addEventListener(evento, () => moverCursorAlFinal(input));
+        input.addEventListener('focus', () => seleccionarTodoEInsertar(input));
+        input.addEventListener('click', () => seleccionarTodoEInsertar(input));
+
+        input.addEventListener('keydown', (e) => {
+            if (debeSobrescribir && (/\d/.test(e.key) || e.key === '.' || e.key === ',')) {
+                input.value = '';
+                debeSobrescribir = false;
+            }
+        });
+
+        input.addEventListener('beforeinput', (e) => {
+            if (e.data === '.') {
+                e.preventDefault();
+                if (!input.value.includes(',')) {
+                    input.value += ',';
+                    if (input.id === 'input-monto') calcularDivisa(input);
+                    if (input.id === 'input-bs') calcularBs(input);
+                }
+            }
         });
     });
 });
